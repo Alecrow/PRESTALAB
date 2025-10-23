@@ -1,0 +1,22 @@
+# Python / build
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+
+# VS Code / logs
+.vscode/
+*.log
+
+# Entornos y secretos
+.env
+.env.*
+
+# DB y artefactos pesados (ajusta si quieres subir .db específicos)
+prestalab_SOA/backend/db/data/
+*.db
+
+# Node (si aplica)
+node_modules/
+dist/
+build/
