@@ -1,0 +1,165 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: soa_db
+    environment:
+      MYSQL_ROOT_PASSWORD: psoa_password
+      MYSQL_DATABASE: soa_db
+      MYSQL_USER: usoa_user
+      MYSQL_PASSWORD: psoa_password
+      TZ: "UTC"
+    command: >
+      mysqld --default-authentication-plugin=mysql_native_password
+             --character-set-server=utf8mb4
+             --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+      - ./db/seed_data.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$$MYSQL_USER -p$$MYSQL_PASSWORD || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [soa_net]
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: soa_phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8088:80"
+    networks: [soa_net]
+
+  bus:
+    image: jrgiadach/soabus:latest
+    container_name: soa_bus
+    ports:
+      - "5000:5000"
+    networks: [soa_net]
+
+  gerep:
+    build:
+      context: .
+      dockerfile: services/gerep/Dockerfile
+    container_name: soa_gerep
+    environment:
+      - BUS_URL=http://bus:5000
+      - DATABASE_URL=mysql+pymysql://usoa_user:psoa_password@db:3306/soa_db?charset=utf8mb4
+    depends_on:
+      db:
+        condition: service_healthy
+      bus:
+        condition: service_started
+    ports: ["8001:8000"]
+    networks: [soa_net]
+
+  lista:
+    build:
+      context: .
+      dockerfile: services/lista/Dockerfile
+    container_name: soa_lista
+    environment:
+      - BUS_URL=http://bus:5000
+      - DATABASE_URL=mysql+pymysql://usoa_user:psoa_password@db:3306/soa_db?charset=utf8mb4
+    depends_on:
+      db:
+        condition: service_healthy
+      bus:
+        condition: service_started
+    ports: ["8002:8000"]
+    networks: [soa_net]
+
+  multa:
+    build:
+      context: .
+      dockerfile: services/multa/Dockerfile
+    container_name: soa_multa
+    environment:
+      - BUS_URL=http://bus:5000
+      - DATABASE_URL=mysql+pymysql://usoa_user:psoa_password@db:3306/soa_db?charset=utf8mb4
+    depends_on:
+      db:
+        condition: service_healthy
+      bus:
+        condition: service_started
+    ports: ["8003:8000"]
+    networks: [soa_net]
+
+  notis:
+    build:
+      context: .
+      dockerfile: services/notis/Dockerfile
+    container_name: soa_notis
+    environment:
+      - BUS_URL=http://bus:5000
+      - DATABASE_URL=mysql+pymysql://usoa_user:psoa_password@db:3306/soa_db?charset=utf8mb4
+    depends_on:
+      db:
+        condition: service_healthy
+      bus:
+        condition: service_started
+    ports: ["8004:8000"]
+    networks: [soa_net]
+
+  prart:
+    build:
+      context: .
+      dockerfile: services/prart/Dockerfile
+    container_name: soa_prart
+    environment:
+      - BUS_URL=http://bus:5000
+      - DATABASE_URL=mysql+pymysql://usoa_user:psoa_password@db:3306/soa_db?charset=utf8mb4
+    depends_on:
+      db:
+        condition: service_healthy
+      bus:
+        condition: service_started
+    ports: ["8005:8000"]
+    networks: [soa_net]
+
+  regist:
+    build:
+      context: .
+      dockerfile: services/regist/Dockerfile
+    container_name: soa_regist
+    environment:
+      - BUS_URL=http://bus:5000
+      - DATABASE_URL=mysql+pymysql://usoa_user:psoa_password@db:3306/soa_db?charset=utf8mb4
+    depends_on:
+      db:
+        condition: service_healthy
+      bus:
+        condition: service_started
+    ports: ["8006:8000"]
+    networks: [soa_net]
+
+  sugit:
+    build:
+      context: .
+      dockerfile: services/sugit/Dockerfile
+    container_name: soa_sugit
+    environment:
+      - BUS_URL=http://bus:5000
+      - DATABASE_URL=mysql+pymysql://usoa_user:psoa_password@db:3306/soa_db?charset=utf8mb4
+    depends_on:
+      db:
+        condition: service_healthy
+      bus:
+        condition: service_started
+    ports: ["8007:8000"]
+    networks: [soa_net]
+
+volumes:
+  db_data:
+
+networks:
+  soa_net:
+    driver: bridge
